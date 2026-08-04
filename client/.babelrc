@@ -3,7 +3,7 @@
     [
       "@babel/env", {
         "useBuiltIns": "usage",
-        "modules": "commonjs",
+        "modules": "auto",
         "corejs": "3"
       }
     ],
@@ -11,21 +11,15 @@
     "@babel/preset-react"
   ],
   "plugins": [
-    "@babel/plugin-proposal-class-properties",
+    "@babel/plugin-transform-class-properties",
     "@babel/plugin-syntax-dynamic-import",
-    "@babel/plugin-transform-modules-commonjs",
-    "@babel/plugin-proposal-private-methods",
-    "@babel/plugin-proposal-private-property-in-object"
+    "@babel/plugin-transform-private-methods",
+    "@babel/plugin-transform-private-property-in-object"
   ],
   "env": {
     "test": {
       "plugins": [
         "babel-plugin-transform-es2015-modules-commonjs"
-      ]
-    },
-    "development": {
-      "plugins": [
-        "flow-react-proptypes"
       ]
     }
   }

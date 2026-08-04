@@ -32,19 +32,23 @@ export const InputTextareaTemplate = ({
   options: optionsProp,
   myRef,
 }: Props): Node => {
-  const [value, setValue] = useState(valueProp);
-  const [textareaKey, setTextareaKey] = useState();
-  const textareaRef = useRef(null);
+  const selectedOption = optionsProp && optionsProp.find((opt) => opt.selected);
+  const [value, setValue] = useState<string | void>(
+    valueProp || (selectedOption ? selectedOption.value : undefined),
+  );
+  const [textareaKey, setTextareaKey] = useState<string>('');
+  const textareaRef = useRef<?HTMLInputElement>(null);
 
-  const options = optionsProp
-    && optionsProp.length > 0
-    && [
+  const options: ?(Option[]) = optionsProp && optionsProp.length > 0
+    ? ([
       {
         id: 'default',
         label: I18n.t('common.form.template'),
         value: '',
       },
-    ].concat(optionsProp);
+      ...optionsProp,
+    ]: Option[])
+    : null;
 
   const onChangeForSelect = (e: SyntheticEvent<HTMLInputElement>) => {
     let updatedTextareaValue = '';
@@ -72,8 +76,8 @@ export const InputTextareaTemplate = ({
           <InputSelect
             id={`${id}-select`}
             options={options}
-            dark={dark}
             onChange={onChangeForSelect}
+            value={selectedOption ? selectedOption.value : undefined}
           />
         </div>
       )}

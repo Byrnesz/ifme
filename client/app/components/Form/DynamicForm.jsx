@@ -1,9 +1,9 @@
 // @flow
-/* eslint-disable max-len */
+
 /* eslint-disable no-unused-vars */
 import React, { useState } from 'react';
 import type { Node } from 'react';
-import axios from 'axios';
+import { fetchWrapper } from 'utils/fetchWrapper';
 import Input from 'components/Input';
 import { TYPES as INPUT_TYPES } from 'components/Input/utils';
 import css from './Form.scss';
@@ -27,7 +27,7 @@ const getInputsInitialState = (
   nameValue?: string,
 ): MyInputProps[] => {
   const formInputs = formProps.inputs.filter(
-    (input: MyInputProps) => input !== {},
+    (input: MyInputProps) => typeof input.id === 'string' && input.id.length > 0,
   );
   if (nameValue) {
     formInputs[0].value = nameValue;
@@ -37,8 +37,14 @@ const getInputsInitialState = (
 
 // TODO: Long-term, we should have React (instead of Rails) handle form submissions
 // so that we don't have to do this.
-const getParams = (inputs: MyInputProps[], myRefs: Object) => {
-  const params = {};
+type FormParams = {
+  [string]: {
+    [string]: mixed,
+  },
+};
+
+const getParams = (inputs: MyInputProps[], myRefs: Object): FormParams => {
+  const params: FormParams = {};
   inputs.forEach((input: MyInputProps) => {
     const { name, id } = input;
     if (id !== 'submit') {
@@ -68,7 +74,7 @@ export const DynamicForm = ({
 
   const myRefs: Object = {};
 
-  const handleError = (id: string, error: boolean) => {
+  const handleError = (id: string, error: boolean): void => {
     const newErrors = { ...errors };
     newErrors[id] = error;
     setErrors(newErrors);
@@ -97,7 +103,7 @@ export const DynamicForm = ({
         labelForError.scrollIntoView();
       }
     } else {
-      axios[type || 'post'](formProps.action, getParams(inputs, myRefs))
+      fetchWrapper[type || 'post'](formProps.action, getParams(inputs, myRefs))
         .then((response: Object) => {
           if (onSubmit) {
             onSubmit(response);

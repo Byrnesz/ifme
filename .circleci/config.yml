@@ -12,7 +12,7 @@ defaults: &defaults
     CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
     CIRCLE_TEST_REPORTS: /tmp/circleci-test-results
   docker:
-    - image: cimg/ruby:3.1.4-browsers
+    - image: cimg/ruby:3.3.0-browsers
       environment:
         PGHOST: 127.0.0.1
         PGUSER: circleci
@@ -34,33 +34,33 @@ jobs:
     <<: *defaults
     steps:
       - checkout
-      # Restore dependency caches
+      # Restore dependency caches - Updated to v3 to bypass stale Ruby 3.3 environments
       - restore_cache:
           keys:
-            - v2-bundle-{{ arch }}-{{ checksum "Gemfile.lock" }}
-            - v2-bundle-{{ arch }}-
-            - v2-bundle-
+            - v3-bundle-{{ arch }}-{{ checksum "Gemfile.lock" }}
+            - v3-bundle-{{ arch }}-
+            - v3-bundle-
       - restore_cache:
           keys:
-            - v2-yarn-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "client/yarn.lock" }}
-            - v2-yarn-{{ arch }}-{{ checksum "yarn.lock" }}
-            - v2-yarn-{{ arch }}-
+            - v3-yarn-{{ arch }}-{{ checksum "yarn.lock" }}-{{ checksum "client/yarn.lock" }}
+            - v3-yarn-{{ arch }}-{{ checksum "yarn.lock" }}
+            - v3-yarn-{{ arch }}-
       - run:
           name: Setup dependencies
           command: |
             gem install bundler
             bundle config set --local path 'vendor/bundle'
             bundle install --jobs=4 --retry=3
-            
+
             # Install and setup Node
             wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.1/install.sh | bash
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            nvm install v20.17.0
-            nvm alias default 20.17.0
+            nvm install 22
+            nvm alias default 22
             echo 'export NVM_DIR="$HOME/.nvm"' >> $BASH_ENV
             echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
-            
+
             # Install yarn dependencies
             yarn install --frozen-lockfile --cache-folder ~/.cache/yarn
       - run:
@@ -72,18 +72,18 @@ jobs:
             sudo apt --fix-broken install -y
       # Save dependency caches
       - save_cache:
-          key: v1-bundle-{{ checksum "Gemfile.lock" }}
+          key: v3-bundle-{{ checksum "Gemfile.lock" }}
           paths:
             - vendor/bundle
       - save_cache:
-          key: v1-yarn-{{ checksum "client/yarn.lock" }}
+          key: v3-yarn-{{ checksum "client/yarn.lock" }}
           paths:
             - ~/.cache/yarn
             - client/node_modules
       - run:
           name: Wait for DB
           command: dockerize -wait tcp://localhost:5432 -timeout 1m
-      
+
       - run:
           name: Setup test environment
           command: |
@@ -122,7 +122,7 @@ jobs:
           path: $CIRCLE_TEST_REPORTS
       - run:
           name: Run bundle-audit check
-          command: bundle exec bundle-audit check --update --ignore CVE-2024-21510 || true
+          command: bundle exec bundle-audit check --update || true
       - store_test_results:
           path: /tmp/circleci-test-results
       - store_artifacts:
@@ -157,16 +157,22 @@ jobs:
           at: ~/ifmeorg/ifme/tmp
       - restore_cache:
           keys:
-            - v1-dep-{{ .Branch }}-
-            - v1-dep-main-
-            - v1-dep-
+            - v3-dep-{{ .Branch }}-
+            - v3-dep-main-
+            - v3-dep-
       - run:
-          name: Update to Node v20.17.0
+          name: Update to Node v22
           command: |
-            curl -sSL "https://nodejs.org/dist/v20.17.0/node-v20.17.0-linux-x64.tar.xz" | sudo tar --strip-components=2 -xJ -C /usr/local/bin/ node-v20.17.0-linux-x64/bin/node
-            curl https://www.npmjs.com/install.sh | sudo bash
+            wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.1/install.sh | bash
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm install 22
+            nvm alias default 22
+            echo 'export NVM_DIR="$HOME/.nvm"' >> $BASH_ENV
+            echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> $BASH_ENV
       - run: gem install bundler
-      - run: bundle install --path=vendor/bundle --jobs=4 --retry=3
+      - run: bundle config set path 'vendor/bundle'
+      - run: bundle install --jobs=4 --retry=3
       - run: yarn install --cache-folder ~/.cache/yarn
       - run:
           name: Deploy Storybook
@@ -174,7 +180,7 @@ jobs:
             cd client
             yarn deploy:storybook
       - save_cache:
-          key: v1-dep-{{ .Branch }}-{{ epoch }}
+          key: v3-dep-{{ .Branch }}-{{ epoch }}
           paths:
             - ~/.cache/yarn
             - ./node_modules

@@ -1,7 +1,7 @@
 // @flow
 import React, { useState } from 'react';
 import type { Node } from 'react';
-import axios from 'axios';
+import { fetchWrapper } from 'utils/fetchWrapper';
 import { I18n } from 'libs/i18n';
 import { PageTitle } from 'components/PageTitle';
 import Modal from 'components/Modal';
@@ -17,12 +17,16 @@ type Props = {
 };
 
 export const MomentTemplates = ({ templates: templatesProp }: Props): Node => {
-  const [editableTemplate, setEditableTemplate] = useState();
-  const [modalKey, setModalKey] = useState();
+  const [editableTemplate, setEditableTemplate] = useState<?Template>(null);
+  const [modalKey, setModalKey] = useState<string>('');
   const [templates, setTemplates] = useState(templatesProp || []);
   const [openModal, setOpenModal] = useState(false);
 
-  const premadeTemplates = [
+  const premadeTemplates: Array<{
+    id?: string | number,
+    name: string,
+    description: string,
+  }> = [
     {
       name: I18n.t('moment_templates.index.premade1_name'),
       description: I18n.t('moment_templates.index.premade1_description'),
@@ -33,20 +37,20 @@ export const MomentTemplates = ({ templates: templatesProp }: Props): Node => {
     },
   ];
 
-  const editTemplate = (template) => {
+  const editTemplate = (template: Template): void => {
     setEditableTemplate(template);
     setOpenModal(true);
     setModalKey(Utils.randomString());
   };
 
   const addPremadeTemplates = () => {
-    const premadeOne = axios
+    const premadeOne = fetchWrapper
       .post('/moment_templates/create', {
         moment_template: premadeTemplates[0],
       })
       .then((response: Object) => response);
 
-    const premadeTwo = axios
+    const premadeTwo = fetchWrapper
       .post('/moment_templates/create', {
         moment_template: premadeTemplates[1],
       })

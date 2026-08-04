@@ -1,7 +1,7 @@
-@import "~styles/_global.scss";
+@import "~styles/_global";
 
 .textarea {
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .button {
@@ -94,7 +94,7 @@
 }
 
 .editor:focus-within {
-   > div:first-child {
+  > div:first-child {
     position: sticky;
     top: $nav-height;
     left: 0;

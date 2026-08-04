@@ -9,7 +9,7 @@ import type { Template } from 'pages/MomentTemplates/MomentTemplatesForm';
 import css from './MomentTemplates.scss';
 
 type PremadeTemplate = {
-  id?: string,
+  id?: string | number,
   name: string,
   description: string,
 };
@@ -22,29 +22,30 @@ type Props = {
 export const MomentTemplate = ({ template, editTemplate }: Props): Node => {
   const { id, name, description } = template;
   const [open, setOpen] = useState(false);
-  const [modalKey, setModalKey] = useState();
+  const [modalKey, setModalKey] = useState<string>('');
 
   return (
     <div className="gridTwoItemBoxLight">
       <Modal
         title={name}
-        body={
+        body={(
           <>
             <div className={css.marginBottom}>
               <button
                 type="button"
                 className={css.buttonDarkM}
                 onClick={() => {
-                    window.location.href= id ? `/moments/new?templateId=${id}` : '/moments/new';
-                  }
-                }
+                  window.location.href = id
+                    ? `/moments/new?templateId=${id}`
+                    : '/moments/new';
+                }}
               >
                 {I18n.t('moments.new')}
               </button>
             </div>
             {Utils.renderContent(description)}
           </>
-        }
+        )}
         open={open}
         modalKey={modalKey}
       />

@@ -5,13 +5,14 @@
 const glob = require('glob');
 const { resolve } = require('path');
 const CompressionPlugin = require('compression-webpack-plugin');
-const ExtractCssChunks = require('extract-css-chunks-webpack-plugin');
 const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
-const OptimizeCssAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const webpackConfigLoader = require('react-on-rails/webpackConfigLoader');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const webpack = require('webpack');
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 
 const configPath = resolve('..', 'config');
 const devOrTestMode = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
@@ -44,25 +45,20 @@ const config = {
       mocks: resolve(__dirname, 'app/mocks'),
       widgets: resolve(__dirname, 'app/widgets'),
       pages: resolve(__dirname, 'app/pages'),
+      moment: resolve(__dirname, 'app/libs/moment-compat.js'),
     },
     extensions: ['.js', '.jsx', '.scss'],
   },
 
   entry: {
-    // Shims should be singletons, and webpack bundle is always loaded
-    webpack_bundle: [
-      'es5-shim/es5-shim',
-      'es5-shim/es5-sham',
-      '@babel/polyfill',
-    ].concat(glob.sync('./app/startup/*')),
+    webpack_bundle: glob.sync('./app/startup/*'),
   },
 
   output: {
     // Name comes from the entry section.
     filename: `${outputFilename}.js`,
     chunkFilename: `${outputFilename}.chunk.js`,
-    // Leading slash is necessary
-    publicPath: `/${output.publicPath}`,
+    publicPath: output.publicPath,
     path: output.path,
   },
 
@@ -88,13 +84,7 @@ const config = {
       },
     },
     minimizer: devOrTestMode ? [] : [
-      new OptimizeCssAssetsPlugin({
-        cssProcessorOptions: {
-          discardComments: {
-            removeAll: true,
-          },
-        },
-      }),
+      new CssMinimizerPlugin(),
       new CompressionPlugin({
         filename: '[path][base].gz[query]',
         algorithm: 'gzip',
@@ -107,15 +97,13 @@ const config = {
   },
 
   plugins: [
-    new ExtractCssChunks({
+    new MiniCssExtractPlugin({
       filename: `${outputFilename}.css`,
       chunkFilename: `${outputFilename}.chunk.css`,
-      hot: !!devOrTestMode,
     }),
     new WebpackManifestPlugin({ publicPath: output.publicPath, writeToFileEmit: true }),
-    // only load moment.js data for locales we support (see config/locale.rb)
-    new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /en|es|de|it|nb|nl|pt-BR|sv|vi|fr/),
     new NodePolyfillPlugin(),
+    ...(process.env.BUNDLE_ANALYZE ? [new BundleAnalyzerPlugin({ analyzerMode: 'static', openAnalyzer: false })] : []),
   ],
 
   module: {
@@ -129,7 +117,7 @@ const config = {
         test: /\.css$/,
         include: /node_modules/,
         use: [
-          ExtractCssChunks.loader,
+          MiniCssExtractPlugin.loader,
           {
             loader: 'css-loader',
             options: {
@@ -145,7 +133,7 @@ const config = {
         test: /\.css$/,
         exclude: /node_modules/,
         use: [
-          ExtractCssChunks.loader,
+          MiniCssExtractPlugin.loader,
           cssLoaderWithModules,
         ],
       },
@@ -153,7 +141,7 @@ const config = {
         test: /\.(sass|scss)$/,
         include: /node_modules/,
         use: [
-          ExtractCssChunks.loader,
+          MiniCssExtractPlugin.loader,
           {
             loader: 'css-loader',
             options: {
@@ -170,7 +158,7 @@ const config = {
         test: /\.(sass|scss)$/,
         exclude: /node_modules/,
         use: [
-          ExtractCssChunks.loader,
+          MiniCssExtractPlugin.loader,
           cssLoaderWithModules,
           'sass-loader',
         ],
@@ -181,27 +169,23 @@ const config = {
       },
       {
         test: /\.(png|jp(e*)g|svg|webp)$/,
-        use: [
-          {
-            loader: 'url-loader',
-            options: {
-              limit: 8000,
-              name: 'images/[contenthash]-[name].[ext]',
-            },
+        type: 'asset',
+        parser: {
+          dataUrlCondition: {
+            maxSize: 8000,
           },
-        ],
+        },
+        generator: {
+          filename: 'images/[contenthash]-[name][ext]',
+        }
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2)$/,
         include: /node_modules/,
-        use: [
-          {
-            loader: 'file-loader',
-            options: {
-              name: 'fonts/[contenthash]-[name].[ext]',
-            },
-          },
-        ],
+        type: 'asset/resource',
+        generator: {
+          filename: 'fonts/[contenthash]-[name][ext]',
+        }
       },
     ],
   },

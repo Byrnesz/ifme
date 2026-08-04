@@ -1,19 +1,20 @@
 # frozen_string_literal: true
 
 source 'https://rubygems.org'
-ruby '~> 3.1.4'
+ruby '~> 3.3.0' # Adjusted for general 3.3 compatibility
 
-gem 'puma', '5.6.9'  # Latest capybara doesn't work with puma 6.0 at the moment.
+gem 'logger'
+gem 'puma', '7.2.1'
 gem 'rack-rewrite'
 gem 'rails', '~> 7.0.8.4'
 
 gem 'activerecord-import'
-gem 'bcrypt', '3.1.13'
-gem 'devise', '~> 4.8.1'
-gem 'devise_invitable', '~> 2.0.9'
-gem 'devise-pwned_password'
+gem 'bcrypt', '>= 3.1.22'
+gem 'devise', '>= 5.0.3'
+gem 'devise_invitable', '~> 2.0.11'
+gem 'devise-pwned_password', '~> 0.2.0'
 gem 'devise_uid'
-gem 'pg', '1.1.4'
+gem "pg", "~> 1.5"
 gem "recaptcha"
 gem 'resque', '2.6.0'
 gem 'resque-scheduler', '4.10.2'
@@ -21,23 +22,24 @@ gem 'resque_mailer', '2.4.3'
 
 gem 'jbuilder', '~> 2.9.1'
 gem 'jquery-rails', '4.4.0'
-gem 'sass-rails', '~> 5.0', '>= 5.0.6'
+gem 'dartsass-sprockets'
 gem 'turbolinks', '~> 5.2.0'
 
-gem 'carrierwave', '~> 2.2.6'
+gem 'carrierwave', '~> 2.2.7'
 gem 'certified', '1.0.0'
 gem 'chronic', '0.10.2'
 gem 'cloudinary', '~> 1.25.0'
-gem 'image_processing', '~> 1.12.2'  # For WebP conversion
+gem 'image_processing', '~> 1.12.2'
 gem 'google-api-client', '~> 0.53.0'
 gem 'kaminari', '1.2.1'
 gem 'omniauth', '~> 2.0'
 gem 'omniauth-facebook'
 gem 'omniauth-google-oauth2', '~> 1.0.1'
-gem 'omniauth-rails_csrf_protection', '~> 1.0.1'
+gem 'omniauth-rails_csrf_protection', '~> 1.0.2'
 gem 'premailer-rails'
 gem 'pusher', '1.3.3'
-gem 'rails-i18n', '~> 7.0.5'
+
+gem 'rails-i18n', '~> 7.0'
 
 gem 'friendly_id', '~> 5.2.5'
 gem 'sdoc', '1.0.0', group: :doc
@@ -45,44 +47,38 @@ gem 'sdoc', '1.0.0', group: :doc
 gem 'font-awesome-sass'
 gem 'inline_svg'
 
-gem 'groupdate', '~> 6.1'
+gem 'groupdate', '~> 6.5.1'
 
 gem 'react_on_rails', '12.0.1'
 gem 'webpacker'
 
 gem 'selenium-webdriver', '~> 4.22.0'
-
 gem 'rubyzip', '~> 1.3.0'
 
 gem 'sidekiq', '6.5.10'
 gem 'sidekiq-middleware'
 gem 'sidekiq-failures'
-gem "sidekiq-cron", "~> 1.1"
-gem 'net-smtp', require: false # this is a rails 6 fix and will go away soon.
+gem "sidekiq-cron", "~> 2.4"
+gem 'net-smtp', require: false
 gem "sprockets-rails"
 
 group :development, :test do
   gem 'bundler-audit'
   gem 'dotenv-rails', '~> 2.7.2'
-
   gem 'spring'
-
   gem 'annotate', '~> 3.2.0'
   gem 'railroady', '1.5.3'
-  gem 'rails-erd', '~> 1.6'
-
+  gem 'rails-erd', '~> 1.7.2'
   gem 'better_errors', '~> 2.5'
   gem 'byebug'
   gem 'pry-byebug'
   gem 'pry-rails'
   gem 'rack-mini-profiler'
-
   gem 'capybara', '~> 3.39.2'
   gem 'factory_bot_rails'
   gem 'rspec-collection_matchers', '~> 1.1.3'
   gem 'rspec-html-matchers', '~> 0.9.0'
   gem 'rspec-rails', '~> 4.0.0'
-
   gem 'letter_opener'
   gem 'rspec_junit_formatter'
 
@@ -92,16 +88,13 @@ group :development, :test do
   gem 'rubocop-rspec'
 
   gem 'foreman'
-
   gem 'bullet'
-
-  gem 'actionview'
 end
 
 group :test do
   gem 'database_cleaner'
   gem 'rails-controller-testing'
-  gem 'shoulda-matchers', '~> 6.0'
+  gem 'shoulda-matchers', '~> 6.5.0'
   gem 'simplecov', '~> 0.17.0'
 end
 

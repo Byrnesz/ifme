@@ -1,6 +1,7 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import React from 'react';
 import TestUtils from 'react-dom/test-utils';
+
+window.Element.prototype.scrollIntoView = jest.fn();
 
 Object.defineProperty(window, 'alert', {
   value: () => {},
@@ -15,6 +16,18 @@ Object.defineProperty(window.document, 'execCommand', {
 Object.defineProperty(window, 'scrollTo', {
   value: () => {},
   writable: true,
+});
+
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: (query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+    dispatchEvent: jest.fn(),
+  }),
 });
 
 Object.defineProperty(window, 'location', {
@@ -38,10 +51,17 @@ global.console.error = (...args) => {
   /**
    * Avoid jsdom error message after submitting a form
    * https://github.com/jsdom/jsdom/issues/1937
+   *
+   * The newer jsdom requires validation for two methods: submit and requestSubmit.
+   * The previous solution used a complete error message string stored in a variable.
+   * Since both methods share the same prefix, we removed the variable and now use
+   * a partial match in includes(), covering both methods with a single check.
    */
-  const errorMessage = 'Not implemented: HTMLFormElement.prototype.submit';
-
-  if (args && args[0].includes(errorMessage)) {
+  if (
+    args
+    && typeof args[0] === 'string'
+    && args[0].includes('Not implemented: HTMLFormElement.prototype.')
+  ) {
     return false;
   }
 

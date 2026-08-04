@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import type { Node } from 'react';
 import { I18n } from 'libs/i18n';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import css from './Toast.scss';
 
 type Props = {
@@ -17,12 +17,12 @@ export type State = {
 
 export const Toast = ({ alert, notice, appendDashboardClass }: Props): Node => {
   const [showAlert, setShowAlert] = useState<boolean>(
-    alert !== null
+    alert != null
       && alert !== ''
       && !document.documentElement?.hasAttribute('data-turbolinks-preview'),
   );
   const [showNotice, setShowNotice] = useState<boolean>(
-    notice !== null
+    notice != null
       && notice !== ''
       && !document.documentElement?.hasAttribute('data-turbolinks-preview'),
   );

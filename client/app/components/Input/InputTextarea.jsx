@@ -1,11 +1,12 @@
 // @flow
 import React, { useState, useEffect, useRef } from 'react';
 import type { Node } from 'react';
-import { sanitize } from 'dompurify';
+import DOMPurify from 'dompurify';
 import ReactDOMServer from 'react-dom/server';
 import { init, exec } from 'pell';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faLink } from '@fortawesome/free-solid-svg-icons';
+import { faImage } from '@fortawesome/free-solid-svg-icons/faImage';
+import { faLink } from '@fortawesome/free-solid-svg-icons/faLink';
 import css from './InputTextarea.scss';
 import inputCss from './Input.scss';
 
@@ -72,16 +73,22 @@ export type Props = {
   dark?: boolean,
 };
 
+type PellEditor = {
+  content: HTMLElement,
+};
+
 export function InputTextarea(props: Props): Node {
   const {
     id, name, value: propValue, required, hasError, myRef, dark,
   } = props;
-  const [value, setValue] = useState<string>(sanitize(propValue) || '');
-  const editorRef = useRef(null);
-  const editor = useRef(null);
+  const [value, setValue] = useState<string>(
+    DOMPurify.sanitize(propValue) || '',
+  );
+  const editorRef = useRef<?HTMLDivElement>(null);
+  const editor = useRef<?PellEditor>(null);
 
   const onChange = (updatedValue: string) => {
-    setValue(sanitize(updatedValue));
+    setValue(DOMPurify.sanitize(updatedValue));
   };
 
   const onBlur = () => {
@@ -99,41 +106,58 @@ export function InputTextarea(props: Props): Node {
     }
   };
 
-  const onPaste = (e) => {
+  const onPaste = (e: SyntheticEvent<HTMLElement>) => {
     e.preventDefault();
 
-    const text = (e.originalEvent || e).clipboardData.getData('text/plain') ?? '';
+    const clipboardData = (e.originalEvent && e.originalEvent.clipboardData) || e.clipboardData;
+    const text = clipboardData ? clipboardData.getData('text/plain') : '';
 
-    document.execCommand('insertHTML', false, sanitize(text));
+    document.execCommand('insertHTML', false, DOMPurify.sanitize(text));
   };
 
   useEffect(() => {
-  if (editorRef.current) {
-    editor.current = init({
-      element: editorRef.current.getElementsByClassName('editor')[0],
-      onChange,
-      classes,
-      actions,
-    });
-    editor.current.content.innerHTML = value;
-    const toolbarButtons = editorRef.current.querySelectorAll('.pell-actionbar button');
-    toolbarButtons.forEach(btn => {
-      btn.addEventListener('mousedown', e => e.preventDefault());
-      btn.addEventListener('click', () => {
-        editor.current.content.focus({ preventScroll: true });
+    if (editorRef.current) {
+      const currentEditorRef = editorRef.current;
+      editor.current = init({
+        element: currentEditorRef.getElementsByClassName('editor')[0],
+        onChange,
+        classes,
+        actions,
       });
-    });
-    return () => {
-      toolbarButtons.forEach(btn => {
-        btn.removeEventListener('mousedown', e => e.preventDefault());
-        btn.removeEventListener('click', () => {
-          editor.current.content.focus({ preventScroll: true });
+      if (editor.current) {
+        editor.current.content.innerHTML = value;
+      }
+      const toolbarButtons = currentEditorRef.querySelectorAll(
+        '.pell-actionbar button',
+      );
+      toolbarButtons.forEach((btn: HTMLElement) => {
+        btn.addEventListener(
+          'mousedown',
+          (event: SyntheticEvent<HTMLElement>) => event.preventDefault(),
+        );
+        btn.addEventListener('click', () => {
+          if (editor.current) {
+            editor.current.content.focus({ preventScroll: true });
+          }
         });
       });
-    };
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
+      return () => {
+        toolbarButtons.forEach((btn: HTMLElement) => {
+          btn.removeEventListener(
+            'mousedown',
+            (event: SyntheticEvent<HTMLElement>) => event.preventDefault(),
+          );
+          btn.removeEventListener('click', () => {
+            if (editor.current) {
+              editor.current.content.focus({ preventScroll: true });
+            }
+          });
+        });
+      };
+    }
+    return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div
